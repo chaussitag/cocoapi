@@ -433,6 +433,11 @@ class COCOeval:
             iouStr = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
                 if iouThr is None else '{:0.2f}'.format(iouThr)
 
+            ############################################################
+            # daiguozhou added for printing per-category result
+            per_category_result = None
+            ############################################################
+
             aind = [i for i, aRng in enumerate(p.areaRngLbl) if aRng == areaRng]
             mind = [i for i, mDet in enumerate(p.maxDets) if mDet == maxDets]
             if ap == 1:
@@ -443,6 +448,13 @@ class COCOeval:
                     t = np.where(iouThr == p.iouThrs)[0]
                     s = s[t]
                 s = s[:,:,:,aind,mind]
+
+                ##################################################
+                # daiguozhou add for printing per-category mAP
+                if iouThr is not None:
+                    #ap_IoUThresh_by_categories = s.reshape(s.shape[1], -1)
+                    per_category_result = np.mean(s, axis=1)
+                ##################################################
             else:
                 # dimension of recall: [TxKxAxM]
                 s = self.eval['recall']
@@ -450,11 +462,25 @@ class COCOeval:
                     t = np.where(iouThr == p.iouThrs)[0]
                     s = s[t]
                 s = s[:,:,aind,mind]
+                ##################################################
+                # daiguozhou add for printing per-category mAR
+                #ar_IouThresh_by_categories = s.reshape(s.shape[0], -1)
+                per_category_result = np.mean(s, axis=0)
+                ##################################################
             if len(s[s>-1])==0:
                 mean_s = -1
             else:
                 mean_s = np.mean(s[s>-1])
             print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
+            ############################################################
+            # daiguozhou added for printing per-category result
+            if per_category_result is not None:
+                print(" Per-Category result:")
+                #print(per_category_result)
+                print(per_category_result.ravel())
+            print("")
+            ############################################################
+
             return mean_s
         def _summarizeDets():
             stats = np.zeros((12,))
